@@ -10,6 +10,7 @@ const connectToDatabase = async () => {
       MONGO_HOST,
       MONGO_PORT,
       MONGO_DATABASE,
+      MONGO_AUTH_SOURCE
     } = process.env;
 
     const mongoOptions = {
@@ -27,7 +28,7 @@ const connectToDatabase = async () => {
     };
 
     await mongoose.connect(
-      `mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}`,
+      `mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DATABASE}${MONGO_AUTH_SOURCE}`,
       { ...mongoCredentials, ...mongoOptions },
     );
   } catch (error) {
