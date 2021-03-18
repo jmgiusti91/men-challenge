@@ -26,5 +26,10 @@
     "validations": {
       "INVALID_ID": "Invalid mongo id"
     }
+  },
+  "comment": {
+    "validations": {
+      "MAX_LENGTH": "The comment cannot have more than"
+    }
   }
 }
