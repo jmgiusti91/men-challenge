@@ -1,6 +1,7 @@
-import { query } from 'express-validator';
+import expressValidator from 'express-validator';
 import locales from '../../../locales/en.json';
 
+const { query } = expressValidator;
 const { KEYWORDS_NOT_EXISTS, KEYWORDS_IS_EMPTY } = locales.post.validations;
 
 const validateQueryKeywords = [

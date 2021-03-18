@@ -1,6 +1,7 @@
-import { param } from 'express-validator';
+import expressValidator from 'express-validator';
 import locales from '../../../locales/en.json';
 
+const { param } = expressValidator;
 const { INVALID_ID } = locales.common.validations;
 
 const validateParamId = (id) => {
