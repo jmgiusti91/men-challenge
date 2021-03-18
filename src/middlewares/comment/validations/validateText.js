@@ -7,6 +7,6 @@ const { check } = expressValidator;
 
 const validateText = check('comment.text')
     .exists()
-    .isLength({ max: MAX_TEXT_LENGTH }).withMessage(`${MAX_LENGTH} ${MAX_TEXT_LENGTH} characters`)
+    .isLength({ max: MAX_TEXT_LENGTH }).withMessage(`${MAX_LENGTH} ${MAX_TEXT_LENGTH}`)
     
 export default validateText;
