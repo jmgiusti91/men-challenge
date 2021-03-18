@@ -19,9 +19,10 @@ const { before, after } = mocha;
 const { describe, it } = mocha;
 const { assert } = chai;
 
-const { TITLE_INVALID_LENGTH, BODY_INVALID_LENGTH } = locales.post.validations;
+const { TITLE_INVALID_LENGTH, BODY_INVALID_LENGTH, KEYWORDS_NOT_EXISTS, KEYWORDS_IS_EMPTY } = locales.post.validations;
 const { USER_NOT_EXISTS } = locales.user.responses;
 const { POST_NOT_EXISTS } = locales.post.responses;
+const { INVALID_ID } = locales.common.validations;
 
 let existingUser = {
   email: faker.internet.email(),
@@ -29,8 +30,9 @@ let existingUser = {
 };
 let existingUserToken;
 
+let fake_title = faker.lorem.words(1)
 const generatePost = () => ({
-  title: faker.lorem.words(1),
+  title: fake_title,
   body: faker.lorem.words(5),
 });
 let existingPost;
@@ -41,6 +43,7 @@ const instance = axios.create({
 });
 
 const FAKE_OBJECT_ID = '5e8b658cb5297dae7ae1fa8e';
+const BAD_OBJECT_ID = 'asdsdasd';
 
 describe('Post Controller', () => {
   before(async () => {
@@ -194,8 +197,13 @@ describe('Post Controller', () => {
         assert.equal(err.response.status, 422);
         assert.isNotEmpty(err.response.data.errors);
         assertHasFieldErrors(err, AUTHOR_FIELD_NAME);
-        const invalidAuthorErr = err.response.data.errors.shift();
-        assert.equal(invalidAuthorErr.msg, USER_NOT_EXISTS);
+        if (err.response.data.errors.length > 1) {
+          const invalidAuthorErr = err.response.data.errors[1];
+          assert.equal(invalidAuthorErr.msg, USER_NOT_EXISTS);
+        } else {
+          const invalidAuthorErr = err.response.data.errors.shift();
+          assert.equal(invalidAuthorErr.msg, USER_NOT_EXISTS);
+        }
       }
     });
     it('Should create a new post successfully', async () => {
@@ -316,6 +324,133 @@ describe('Post Controller', () => {
       await Post.remove({});
     });
   });
+
+  describe('GET /posts/author/:id', () => {
+    before(async () => {
+      const postToCreate = {
+        ...generatePost(),
+        ...{ author: existingUser._id },
+      };
+      existingPost = await Post.create(postToCreate);
+    });
+
+    it('Should return unauthorized as no header is sent', async () => {
+      try {
+        await instance.get(`/posts/author/${existingUser._id}`);
+        assert.fail();
+      } catch (err) {
+        assert.equal(err.response.status, 401);
+      }
+    });
+
+    it('Should return 422 because the mongo id does not have the correct format', async () => {
+      try {
+        await instance.get(
+          `/posts/author/${BAD_OBJECT_ID}`, 
+          buildAuthorizationHeader(existingUserToken));
+        assert.fail();
+      } catch (err) {
+        assert.equal(err.response.status, 422);
+        const invalidMongoId = err.response.data.errors.shift();
+        assert.equal(invalidMongoId.msg, INVALID_ID);
+      }
+    })
+
+    it('Should return empty array because the author does not have any posts', async () => {
+      try {
+        const posts = await instance.get(
+          `/posts/author/${FAKE_OBJECT_ID}`, 
+          buildAuthorizationHeader(existingUserToken));
+        assert.equal(posts.data.length, 0);
+      } catch (err) {
+        assert.fail(err);
+      }
+    })
+
+    it('Should return posts by author', async () => {
+      try {
+        const post = await instance.get(
+          `/posts/author/${existingUser._id}`,
+          buildAuthorizationHeader(existingUserToken),
+        );
+        assert.equal(post.status, 200);
+        assert.equal(post.data[0]._id, existingPost._id);
+        assert.equal(post.data[0].title, existingPost.title);
+        assert.equal(post.data[0].body, existingPost.body);
+        assert.equal(post.data[0].author, existingPost.author);
+      } catch (err) {
+        assert.fail();
+      }
+    })
+
+    after(async () => {
+      await Post.remove({});
+    });
+  })
+
+  describe('GET /posts/search', () => {
+    before(async () => {
+      const postToCreate = {
+        ...generatePost(),
+        ...{ author: existingUser._id },
+      };
+      existingPost = await Post.create(postToCreate);
+    });
+
+    it('Should return unauthorized as no header is sent', async () => {
+      try {
+        await instance.get(`/posts/search?keywords=${fake_title}`);
+        assert.fail();
+      } catch (err) {
+        assert.equal(err.response.status, 401);
+      }
+    });
+
+    it('Should return 422 because keyword query string is missing', async () => {
+      try {
+        await instance.get(
+          `/posts/search`,
+          buildAuthorizationHeader(existingUserToken));
+        assert.fail();
+      } catch (err) {
+        assert.equal(err.response.status, 422);
+        const keywordsMissingParam = err.response.data.errors.shift();
+        assert.equal(keywordsMissingParam.msg, KEYWORDS_NOT_EXISTS);
+      }
+    });
+
+    it('Should return 422 because keyword query string is empty', async () => {
+      try {
+        await instance.get(
+          `/posts/search?keywords=`,
+          buildAuthorizationHeader(existingUserToken));
+        assert.fail();
+      } catch (err) {
+        assert.equal(err.response.status, 422);
+        const keywordsEmptyParam = err.response.data.errors.shift();
+        assert.equal(keywordsEmptyParam.msg, KEYWORDS_IS_EMPTY);
+      }
+    });
+
+    it('Should return posts by keyword', async () => {
+      try {
+        const post = await instance.get(
+          `/posts/search?keywords=${fake_title}`,
+          buildAuthorizationHeader(existingUserToken));
+        assert.equal(post.status, 200);
+        assert.equal(post.data[0]._id, existingPost._id);
+        assert.equal(post.data[0].title, existingPost.title);
+        assert.equal(post.data[0].body, existingPost.body);
+        assert.equal(post.data[0].author, existingPost.author);
+      } catch (err) {
+        assert.fail();
+      }
+    });
+
+    after(async () => {
+      await Post.remove({});
+    });
+  })
 
   after(async () => {
     await User.remove({});
