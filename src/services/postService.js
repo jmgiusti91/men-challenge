@@ -10,6 +10,8 @@ const findById = (id) => Post.findById(id);
 
 const findByAuthor = (author) => Post.find({ author });
 
-const postService = { create, findAll, findById, findByAuthor };
+const findByKeywords = (keywords) =>  Post.find({ $text: { $search: keywords } });
+
+const postService = { create, findAll, findById, findByAuthor, findByKeywords };
 
 export default postService;
