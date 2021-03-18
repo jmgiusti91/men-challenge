@@ -4,6 +4,9 @@ Node + Express + MongoDB challenge
 
 ## Requirements
 
+* [Docker installation guide](https://docs.docker.com/engine/install/)
+* [Docker Compose installation guide](https://docs.docker.com/compose/install/)
+
 ### Node.js
 
 Use [nvm](https://github.com/nvm-sh/nvm) to install node [lts/erbium (v12.16.1)](https://nodejs.org/en/download/) or greater.
@@ -82,6 +85,15 @@ First steps. Either:
 Just allow public access to review after shipping.
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to start!
+
+## Running Men-Challenge with Docker
+
+ 1. Clone the project
+  `https://github.com/jmgiusti91/men-challenge.git`
+ 2. Build the docker images 
+ `docker-compose build`
+ 3. Run men-challenge 
+ `docker-compose up`
 
 ## License
 
